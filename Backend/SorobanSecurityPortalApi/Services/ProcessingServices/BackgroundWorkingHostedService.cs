@@ -25,17 +25,33 @@ namespace SorobanSecurityPortalApi.Services.ProcessingServices
             _config = config;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            _ = Task.Run(async () =>
             {
-                await Task.Run(AutoCompactLargeObjectHeap, cancellationToken);
-                await DoReportsFix();
-                await DoReportsEmbedding();
-                await DoVulnerabilitiesEmbedding();
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Run(AutoCompactLargeObjectHeap, cancellationToken);
+                        await DoReportsFix();
+                        await DoReportsEmbedding();
+                        await DoVulnerabilitiesEmbedding();
+                        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error in background worker: {ex.Message}");
+                        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    }
+                }
+            }, cancellationToken);
 
-            }
+            return Task.CompletedTask;
         }
 
         private void AutoCompactLargeObjectHeap()

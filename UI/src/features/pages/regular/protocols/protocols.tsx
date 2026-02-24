@@ -1,4 +1,4 @@
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import {
     Box,
     Card,
@@ -13,9 +13,10 @@ import {
     Grid,
     Chip,
     Stack,
-    Divider
+    Divider,
+    Autocomplete
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Search as SearchIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import DescriptionIcon from '@mui/icons-material/Description';
 import BugReportIcon from '@mui/icons-material/BugReport';
@@ -30,7 +31,23 @@ import ReactGA from 'react-ga4';
 export const Protocols: FC = () => {
     const { themeMode } = useTheme();
     const navigate = useNavigate();
-    const { protocols, loading, searchText, setSearchText, getProtocolMetrics } = useProtocols();
+    const {
+        protocols,
+        protocolsList,
+        companiesList,
+        auditorsList,
+        loading,
+        searchText,
+        setSearchText,
+        selectedProtocols,
+        setSelectedProtocols,
+        selectedCompanies,
+        setSelectedCompanies,
+        selectedAuditors,
+        setSelectedAuditors,
+        getProtocolMetrics
+    } = useProtocols();
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         ReactGA.send({ hitType: "pageview", page: "/protocols", title: "Protocols Page" });
@@ -55,8 +72,8 @@ export const Protocols: FC = () => {
                     size="small"
                     value={searchText}
                     onChange={e => setSearchText(e.target.value)}
-                    placeholder="Search protocols by name..."
-                    sx={{ minWidth: { xs: '100%', sm: 400, md: 500 } }}
+                    placeholder="Search protocols..."
+                    sx={{ width: '100%', maxWidth: 600 }}
                     slotProps={{
                         input: {
                             endAdornment: (
@@ -67,7 +84,83 @@ export const Protocols: FC = () => {
                         },
                     }}
                 />
+
+                <IconButton
+                    id="protocols-filter-toggle"
+                    onClick={() => setShowFilters(!showFilters)}
+                    sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: themeMode === 'light' ? '#1F2937' : '#374151',
+                        color: 'white',
+                        '&:hover': {
+                            bgcolor: themeMode === 'light' ? '#111827' : '#4B5563'
+                        },
+                        borderRadius: '10px',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:active': { transform: 'scale(0.95)' }
+                    }}
+                >
+                    <FilterListIcon />
+                </IconButton>
+
+                <Button
+                    variant="contained"
+                    onClick={() => {
+                        setSearchText('');
+                        setSelectedProtocols([]);
+                        setSelectedCompanies([]);
+                        setSelectedAuditors([]);
+                    }}
+                    sx={{ borderRadius: '10px', textTransform: 'none' }}
+                >
+                    Clear Filters
+                </Button>
             </Box>
+
+            {showFilters && (
+                <Box sx={{ mb: 4, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', p: 2, borderRadius: '12px', bgcolor: themeMode === 'light' ? '#f5f5f5' : '#222', border: '1px solid', borderColor: 'divider' }}>
+                    <Autocomplete
+                        id="protocol-filter-select"
+                        multiple
+                        size="small"
+                        options={protocolsList}
+                        value={selectedProtocols}
+                        onChange={(_, newValue) => setSelectedProtocols(newValue)}
+                        getOptionLabel={(option) => option.name}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Protocol" sx={{ minWidth: 200 }} />
+                        )}
+                        sx={{ flexGrow: 1, maxWidth: 300 }}
+                    />
+                    <Autocomplete
+                        id="company-filter-select"
+                        multiple
+                        size="small"
+                        options={companiesList}
+                        value={selectedCompanies}
+                        onChange={(_, newValue) => setSelectedCompanies(newValue)}
+                        getOptionLabel={(option) => option.name}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Company" sx={{ minWidth: 200 }} />
+                        )}
+                        sx={{ flexGrow: 1, maxWidth: 300 }}
+                    />
+                    <Autocomplete
+                        id="auditor-filter-select"
+                        multiple
+                        size="small"
+                        options={auditorsList}
+                        value={selectedAuditors}
+                        onChange={(_, newValue) => setSelectedAuditors(newValue)}
+                        getOptionLabel={(option) => option.name}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Auditor" sx={{ minWidth: 200 }} />
+                        )}
+                        sx={{ flexGrow: 1, maxWidth: 300 }}
+                    />
+                </Box>
+            )}
 
             {protocols.length === 0 ? (
                 <Box sx={{ textAlign: 'center', mt: 8 }}>
