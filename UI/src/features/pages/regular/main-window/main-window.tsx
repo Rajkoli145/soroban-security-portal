@@ -26,8 +26,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { environment } from '../../../../environments/environment';
 import { Home } from '../home/home';
 import { Reports } from '../reports/reports';
-import { Protocols } from '../protocols/protocols';
 import { Vulnerabilities } from '../vulnerabilities/vulnerabilities';
+import { Protocols } from '../protocols/protocols';
 import { AddVulnerability } from '../vulnerabilities-add/vulnerabilities-add';
 import { AddReport } from '../reports-add/reports-add';
 import { About } from '../about/about';
@@ -95,8 +95,8 @@ export const MainWindow: FC = () => {
   const baseNavigationItems = [
     { label: 'Home', path: '/' },
     { label: 'Reports', path: '/reports' },
-    { label: 'Protocols', path: '/protocols' },
     { label: 'Vulnerabilities', path: '/vulnerabilities' },
+    { label: 'Protocols', path: '/protocols' },
     { label: 'About', path: '/about' },
   ];
   const isAdminUser =
@@ -350,9 +350,9 @@ export const MainWindow: FC = () => {
             <Route path={`${environment.basePath}/`} element={<Home />} />
             <Route path={`${environment.basePath}/reports`} element={<Reports />} />
             <Route path={`${environment.basePath}/reports/add`} element={<AddReport />} />
-            <Route path={`${environment.basePath}/protocols`} element={<Protocols />} />
             <Route path={`${environment.basePath}/vulnerabilities`} element={<Vulnerabilities />} />
             <Route path={`${environment.basePath}/vulnerabilities/add`} element={<AddVulnerability />} />
+            <Route path={`${environment.basePath}/protocols`} element={<Protocols />} />
             <Route path={`${environment.basePath}/about`} element={<About />} />
             <Route path={`${environment.basePath}/profile`} element={<Profile />} />
             <Route path={`${environment.basePath}/profile/edit`} element={<EditProfile />} />
@@ -517,4 +517,3 @@ export const MainWindow: FC = () => {
     </Box>
   );
 };
-
