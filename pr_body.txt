@@ -1,0 +1,20 @@
+## Description
+This PR implements the "Protocols" section as requested. The new section provides a centralized hub for all audited protocols, displaying real-time security health metrics and integrated audit data.
+
+## Key Changes
+- **Protocols Page**: A premium, responsive grid layout for protocol discovery.
+- **Search & Filter**: Advanced client-side search that filters by Name, Company, Auditor, and Description.
+- **Security Metrics**: Dynamic calculation of total reports, vulnerabilities, fixed issues, and Fix Rate percentage.
+- **Backend Fix**: Resolved a critical Dependency Injection (DI) issue in `Startup.cs` where Singleton services were attempting to consume Scoped processors. This was essential for running the backend locally.
+- **Codebase Integration**: Registered the new feature in `MainWindow.tsx` with proper navigation and routing.
+
+## Demonstration Strategy
+To effectively demonstrate the feature's metrics and search capabilities in the demo video, I implemented a temporary `SeedController` to populate the local database with sample protocols, reports, and vulnerabilities. This data allowed us to verify:
+1. Correct aggregation of security stats (Fix Rate %, Report counts).
+2. Multi-field search logic (filtering by Name, Auditor, and Company).
+The seeding logic and demo data have been removed from this PR to maintain codebase integrity.
+
+## Verification
+- Verified local environment connectivity (Port 7878).
+- Tested search responsiveness and accuracy.
+- Confirmed responsive UI across grid layouts.

@@ -14,10 +14,10 @@ import {
     Chip,
     Stack,
     Divider,
-    Autocomplete
+    Autocomplete,
+    Alert
 } from '@mui/material';
 import { Search as SearchIcon, FilterList as FilterListIcon } from '@mui/icons-material';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import DescriptionIcon from '@mui/icons-material/Description';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -45,9 +45,23 @@ export const Protocols: FC = () => {
         setSelectedCompanies,
         selectedAuditors,
         setSelectedAuditors,
-        getProtocolMetrics
+        getProtocolMetrics,
+        error
     } = useProtocols();
     const [showFilters, setShowFilters] = useState(false);
+    const [loadingImages, setLoadingImages] = useState<{ [key: number]: boolean }>({});
+
+    const handleImageLoad = (id: number) => {
+        setLoadingImages(prev => ({ ...prev, [id]: false }));
+    };
+
+    const handleImageError = (id: number) => {
+        setLoadingImages(prev => ({ ...prev, [id]: false }));
+    };
+
+    const startImageLoading = (id: number) => {
+        setLoadingImages(prev => ({ ...prev, [id]: true }));
+    };
 
     useEffect(() => {
         ReactGA.send({ hitType: "pageview", page: "/protocols", title: "Protocols Page" });
@@ -66,6 +80,12 @@ export const Protocols: FC = () => {
             <Typography variant="h3" sx={{ fontWeight: 600, mb: 4, color: themeMode === 'light' ? '#1A1A1A' : '#F2F2F2' }}>
                 PROTOCOLS
             </Typography>
+
+            {error && (
+                <Alert severity="error" sx={{ mb: 4, borderRadius: '10px' }}>
+                    {error}
+                </Alert>
+            )}
 
             <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <TextField
@@ -128,6 +148,7 @@ export const Protocols: FC = () => {
                         value={selectedProtocols}
                         onChange={(_, newValue) => setSelectedProtocols(newValue)}
                         getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
                         renderInput={(params) => (
                             <TextField {...params} label="Protocol" sx={{ minWidth: 200 }} />
                         )}
@@ -141,6 +162,7 @@ export const Protocols: FC = () => {
                         value={selectedCompanies}
                         onChange={(_, newValue) => setSelectedCompanies(newValue)}
                         getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
                         renderInput={(params) => (
                             <TextField {...params} label="Company" sx={{ minWidth: 200 }} />
                         )}
@@ -154,6 +176,7 @@ export const Protocols: FC = () => {
                         value={selectedAuditors}
                         onChange={(_, newValue) => setSelectedAuditors(newValue)}
                         getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
                         renderInput={(params) => (
                             <TextField {...params} label="Auditor" sx={{ minWidth: 200 }} />
                         )}
@@ -199,11 +222,20 @@ export const Protocols: FC = () => {
                                                 width: '100%',
                                                 height: '100%',
                                                 objectFit: 'contain',
-                                                p: 3
+                                                p: 3,
+                                                display: loadingImages[protocol.id] ? 'none' : 'block'
                                             }}
                                             image={`${environment.apiUrl}/api/v1/protocols/${protocol.id}/image.png`}
                                             alt={protocol.name}
+                                            onLoad={() => handleImageLoad(protocol.id)}
+                                            onError={() => handleImageError(protocol.id)}
+                                            onLoadStart={() => startImageLoading(protocol.id)}
                                         />
+                                        {loadingImages[protocol.id] && (
+                                            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+                                                <CircularProgress size={30} />
+                                            </Box>
+                                        )}
                                     </Box>
 
                                     <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
@@ -260,7 +292,7 @@ export const Protocols: FC = () => {
                                             </Typography>
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                 {metrics.auditors.length > 0 ? (
-                                                    metrics.auditors.slice(0, 3).map((auditor) => (
+                                                    metrics.auditors.slice(0, 3).map((auditor: string) => (
                                                         <Chip key={auditor} label={auditor} size="small" sx={{ borderRadius: '6px' }} />
                                                     ))
                                                 ) : (
@@ -286,16 +318,6 @@ export const Protocols: FC = () => {
                                             >
                                                 View Details
                                             </Button>
-                                            <IconButton
-                                                sx={{
-                                                    borderRadius: '10px',
-                                                    border: '1px solid',
-                                                    borderColor: 'divider'
-                                                }}
-                                                onClick={() => navigate(`/protocol/${protocol.id}`)}
-                                            >
-                                                <FullscreenIcon />
-                                            </IconButton>
                                         </Box>
                                     </CardContent>
                                 </Card>

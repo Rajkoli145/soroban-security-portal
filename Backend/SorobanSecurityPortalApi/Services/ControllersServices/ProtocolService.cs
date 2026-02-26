@@ -3,6 +3,9 @@ using SorobanSecurityPortalApi.Models.ViewModels;
 using AutoMapper;
 using SorobanSecurityPortalApi.Models.DbModels;
 using SorobanSecurityPortalApi.Common;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace SorobanSecurityPortalApi.Services.ControllersServices
 {
@@ -10,15 +13,21 @@ namespace SorobanSecurityPortalApi.Services.ControllersServices
     {
         private readonly IMapper _mapper;
         private readonly IProtocolProcessor _protocolProcessor;
+        private readonly IReportProcessor _reportProcessor;
+        private readonly IVulnerabilityProcessor _vulnerabilityProcessor;
         private readonly UserContextAccessor _userContextAccessor;
 
         public ProtocolService(
             IMapper mapper,
             IProtocolProcessor protocolProcessor,
+            IReportProcessor reportProcessor,
+            IVulnerabilityProcessor vulnerabilityProcessor,
             UserContextAccessor userContextAccessor)
         {
             _mapper = mapper;
             _protocolProcessor = protocolProcessor;
+            _reportProcessor = reportProcessor;
+            _vulnerabilityProcessor = vulnerabilityProcessor;
             _userContextAccessor = userContextAccessor;
         }
 
@@ -65,6 +74,40 @@ namespace SorobanSecurityPortalApi.Services.ControllersServices
             return _mapper.Map<ProtocolStatisticsChangesViewModel>(statsChange);
         }
 
+        public async Task<List<ProtocolWithMetricsViewModel>> ListWithMetrics()
+        {
+            var protocols = await _protocolProcessor.List();
+            var protocolsViewModel = _mapper.Map<List<ProtocolViewModel>>(protocols);
+
+            var reports = await _reportProcessor.GetList(false); // only approved
+            var vulnerabilities = await _vulnerabilityProcessor.GetList();
+
+            var result = new List<ProtocolWithMetricsViewModel>();
+
+            foreach (var protocol in protocolsViewModel)
+            {
+                var protocolReports = reports.Where(r => r.Protocol != null && r.Protocol.Id == protocol.Id).ToList();
+                var protocolVulnerabilities = vulnerabilities.Where(v => v.Report != null && v.Report.Protocol != null && v.Report.Protocol.Id == protocol.Id).ToList();
+
+                var totalVulnerabilities = protocolVulnerabilities.Count;
+                var fixedVulnerabilities = protocolVulnerabilities.Count(v => v.Category == VulnerabilityCategory.Valid);
+                var fixRate = totalVulnerabilities > 0 ? (int)Math.Round((double)fixedVulnerabilities / totalVulnerabilities * 100) : 0;
+
+                result.Add(new ProtocolWithMetricsViewModel
+                {
+                    Protocol = protocol,
+                    ReportsCount = protocolReports.Count,
+                    VulnerabilitiesCount = totalVulnerabilities,
+                    FixedCount = fixedVulnerabilities,
+                    FixRate = fixRate,
+                    CompanyName = protocolReports.FirstOrDefault()?.Protocol?.Company?.Name ?? "N/A",
+                    Auditors = protocolReports.Select(r => r.Auditor?.Name).Where(n => !string.IsNullOrEmpty(n)).Distinct().ToList()!
+                });
+            }
+
+            return result;
+        }
+
         private async Task<bool> CanUpdateProtocol(ProtocolModel protocolModel, int loginId)
         {
             if (protocolModel.CreatedBy == loginId || await _userContextAccessor.IsLoginIdAdmin(loginId))
@@ -90,5 +133,6 @@ namespace SorobanSecurityPortalApi.Services.ControllersServices
         Task Delete(int id);
         Task<Result<ProtocolViewModel, string>> Update(ProtocolViewModel protocolViewModel);
         Task<ProtocolStatisticsChangesViewModel> GetStatisticsChanges();
+        Task<List<ProtocolWithMetricsViewModel>> ListWithMetrics();
     }
 }
