@@ -72,8 +72,17 @@ export const useProtocols = () => {
     }, [searchText, protocolsWithMetrics, selectedProtocols, selectedCompanies, selectedAuditors]);
 
     // Pre-calculate metrics map for quick lookup
+    interface ProtocolMetrics {
+        reportsCount: number;
+        vulnerabilitiesCount: number;
+        fixedCount: number;
+        fixRate: number;
+        companyName: string;
+        auditors: string[];
+    }
+
     const metricsMap = useMemo(() => {
-        const map = new Map<number, any>();
+        const map = new Map<number, ProtocolMetrics>();
         protocolsWithMetrics.forEach(pm => {
             map.set(pm.protocol.id, {
                 reportsCount: pm.reportsCount,
@@ -87,7 +96,7 @@ export const useProtocols = () => {
         return map;
     }, [protocolsWithMetrics]);
 
-    const getProtocolMetrics = (protocolId: number) => {
+    const getProtocolMetrics = (protocolId: number): ProtocolMetrics => {
         return metricsMap.get(protocolId) || {
             reportsCount: 0,
             vulnerabilitiesCount: 0,
